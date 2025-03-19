@@ -2,6 +2,21 @@
 
 A Python interface to the maximum likelihood mutual information calculation from [fastGeneMI](https://github.com/jonathanishhorowicz/fastGeneMI).
 
+Usage
+=====
+
+At the moment only the maximum likelihood mutual information is supported, with an interface similar to the R version.
+
+``` Python
+
+from fastGeneMI import mim_ML_cpp
+
+expression_data = np.random.normal(100, 10, size = (1000, 100), dtype = np.int32)
+
+mi = mim_ML_cpp(expression_data, n_cores = 8)
+
+```
+
 Building
 ========
 
