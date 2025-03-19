@@ -13,7 +13,7 @@ py::array_t<double> mim_ML_py(const arma::mat& disc_expr_data, int n_cores) {
     return carma::mat_to_arr(miMatrix);
 }
 
-PYBIND11_MODULE(fgmi, m) {
+PYBIND11_MODULE(fastGeneMI, m) {
     m.doc() = "pybind11 bindings for fastGeneMI mutual information estimators using Carma";
 
     m.def("mim_ML_cpp", &mim_ML_py,
