@@ -38,10 +38,10 @@
 // ----------------------------------------------------------------------------------
 
 // Maximum likelihood mutual information
-arma::mat mim_ML_cpp(const arma::mat& disc_expr_data, int n_cores)
+arma::mat mim_ML_cpp(const arma::mat& data, int n_cores)
 {
   // Convert from assumed external 1-indexing to C++ indexing
-  arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
+  // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
   const int n_pairs = get_n_gene_pairs(n_genes);
 
@@ -49,7 +49,8 @@ arma::mat mim_ML_cpp(const arma::mat& disc_expr_data, int n_cores)
   std::vector<double> h_marginals(n_genes);
   for(int j = 0; j < n_genes; ++j)
   {
-    arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    // arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    arma::vec p_marginal = get_emp_marg_dist(arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     h_marginals[j] = get_marginal_ml_entropy(p_marginal);
   }
 
@@ -66,7 +67,8 @@ arma::mat mim_ML_cpp(const arma::mat& disc_expr_data, int n_cores)
   {
     std::pair<int,int> ij_pair = ij_pairs[ij];
     int i = ij_pair.first, j = ij_pair.second;
-    arma::mat p_joint = get_emp_joint_dist(data.col(i), data.col(j));
+    arma::mat p_joint = get_emp_joint_dist(arma::conv_to<arma::Mat<int>>::from(data.col(i)),
+                                             arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     h_joints[ij] = get_joint_ml_entropy(p_joint);
   }
 
@@ -89,9 +91,9 @@ arma::mat mim_ML_cpp(const arma::mat& disc_expr_data, int n_cores)
 
 // Mutual information using maximum likelihood entropy estimate and
 // Miller-Madow bias correction
-arma::mat mim_MM_cpp(const arma::mat& disc_expr_data, int n_cores)
+arma::mat mim_MM_cpp(const arma::mat& data, int n_cores)
 {
-  arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
+  // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
   const int n_pairs = get_n_gene_pairs(n_genes);
 
@@ -100,7 +102,9 @@ arma::mat mim_MM_cpp(const arma::mat& disc_expr_data, int n_cores)
   for(int j = 0; j < n_genes; ++j)
   {
     // Compute the Miller-Madow correction to the entropy
-    arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    // arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    arma::vec p_marginal = get_emp_marg_dist(arma::conv_to<arma::Mat<int>>::from(data.col(j)));
+
     int nonzero_bins = arma::size(arma::find(p_marginal))(0);
     double mm_corr = static_cast<double>(nonzero_bins - 1) / (2.0 * static_cast<double>(n_samples));
 
@@ -120,7 +124,10 @@ arma::mat mim_MM_cpp(const arma::mat& disc_expr_data, int n_cores)
   {
     std::pair<int,int> ij_pair = ij_pairs[ij];
     int i = ij_pair.first, j = ij_pair.second;
-    arma::mat p_joint = get_emp_joint_dist(data.col(i), data.col(j));
+    // arma::mat p_joint = get_emp_joint_dist(data.col(i), data.col(j));
+    arma::mat p_joint = get_emp_joint_dist(arma::conv_to<arma::Mat<int>>::from(data.col(i)),
+                                             arma::conv_to<arma::Mat<int>>::from(data.col(j)));
+
     int nonzero_bins = arma::size(arma::find(p_joint))(0);
     double mm_corr = static_cast<double>(nonzero_bins - 1) / (2.0 * static_cast<double>(n_samples));
     h_joints[ij] = get_joint_ml_entropy(p_joint) + mm_corr;
@@ -147,9 +154,9 @@ arma::mat mim_MM_cpp(const arma::mat& disc_expr_data, int n_cores)
 
 
 // Chao-Shen Estimator
-arma::mat mim_CS_cpp(const arma::mat& disc_expr_data, int n_cores)
+arma::mat mim_CS_cpp(const arma::mat& data, int n_cores)
 {
-  arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
+  // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
   const int n_pairs = get_n_gene_pairs(n_genes);
 
@@ -158,7 +165,7 @@ arma::mat mim_CS_cpp(const arma::mat& disc_expr_data, int n_cores)
   for(int j = 0; j < n_genes; ++j)
   {
     // The number of bins with a single count
-    arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    arma::vec p_marginal = get_emp_marg_dist(arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     int sing_count_bins = arma::size(arma::find(p_marginal == 1.0 / static_cast<double>(n_samples)))(0);
     double samp_cov = 1.0 - static_cast<double>(sing_count_bins) / static_cast<double>(n_samples);
     arma::vec cs_corr = 1.0 / (1.0 - arma::pow(1.0 - samp_cov * p_marginal, n_samples));
@@ -182,7 +189,8 @@ arma::mat mim_CS_cpp(const arma::mat& disc_expr_data, int n_cores)
   {
     std::pair<int,int> ij_pair = ij_pairs[ij];
     int i = ij_pair.first, j = ij_pair.second;
-    arma::mat p_joint = get_emp_joint_dist(data.col(i), data.col(j));
+    arma::mat p_joint = get_emp_joint_dist(arma::conv_to<arma::Mat<int>>::from(data.col(i)),
+                                             arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     int sing_count_bins = arma::size(arma::find(p_joint == 1.0 / static_cast<double>(n_samples)))(0);
     double samp_cov = 1.0 - static_cast<double>(sing_count_bins) / static_cast<double>(n_samples);
     arma::mat cs_corr = 1.0 / (1.0 - arma::pow(1.0 - samp_cov * p_joint, n_samples));
@@ -215,9 +223,9 @@ arma::mat mim_CS_cpp(const arma::mat& disc_expr_data, int n_cores)
 
 
 // Shrinkage estimator
-arma::mat mim_shrink_cpp(const arma::mat& disc_expr_data, int n_cores)
+arma::mat mim_shrink_cpp(const arma::mat& data, int n_cores)
 {
-  arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);   // Change from assumed R indexing to C++ indexing
+  // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);   // Change from assumed R indexing to C++ indexing
   const int n_genes(data.n_cols), n_samples(data.n_rows);
   const int n_pairs = get_n_gene_pairs(n_genes);
 
@@ -226,7 +234,7 @@ arma::mat mim_shrink_cpp(const arma::mat& disc_expr_data, int n_cores)
   for(int j = 0; j < n_genes; ++j)
   {
     // Compute the shrinkage intensity lambda
-    arma::vec p_marginal = get_emp_marg_dist(data.col(j));
+    arma::vec p_marginal = get_emp_marg_dist(arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     double n_bins = static_cast<double>(p_marginal.n_elem);
     double lambda_numer = 1.0 - arma::accu(arma::pow(p_marginal, 2.0));
     double lambda_denom = static_cast<double>(n_samples - 1) *
@@ -262,7 +270,8 @@ arma::mat mim_shrink_cpp(const arma::mat& disc_expr_data, int n_cores)
   {
     std::pair<int,int> ij_pair = ij_pairs[ij];
     int i = ij_pair.first, j = ij_pair.second;
-    arma::mat p_joint = get_emp_joint_dist(data.col(i), data.col(j));
+    arma::mat p_joint = get_emp_joint_dist(arma::conv_to<arma::Mat<int>>::from(data.col(i)),
+                                             arma::conv_to<arma::Mat<int>>::from(data.col(j)));
     double n_bins = static_cast<double>(p_joint.n_elem);
     double lambda_numer = 1.0 - arma::accu(arma::pow(p_joint, 2.0));
     double lambda_denom = static_cast<double>(n_samples - 1) *
