@@ -40,7 +40,7 @@
 // Maximum likelihood mutual information
 arma::mat mim_ML_cpp(const arma::mat& data, int n_cores)
 {
-  // Convert from assumed external 1-indexing to C++ indexing
+  // Convert from assumed external 1-indexing to C++ indexing (Not needed for python)
   // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
   const int n_pairs = get_n_gene_pairs(n_genes);

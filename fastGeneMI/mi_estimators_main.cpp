@@ -1,3 +1,5 @@
+#include <armadillo>
+
 #include "mi_estimators.hpp"
 
 // Main function for standalone execution
