@@ -6,7 +6,7 @@
 int main() {
   // Example: Create a sample matrix.
   // The sample matrix is assumed to be in R indexing (1-indexed), so the code subtracts 1.
-  arma::mat sampleData = {
+  arma::Mat<int> sampleData = {
     {1, 2, 3},
     {3, 2, 1},
     {2, 3, 1},

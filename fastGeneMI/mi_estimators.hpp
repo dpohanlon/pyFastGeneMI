@@ -38,7 +38,7 @@
 // ----------------------------------------------------------------------------------
 
 // Maximum likelihood mutual information
-arma::mat mim_ML_cpp(const arma::mat& data, int n_cores)
+arma::mat mim_ML_cpp(const arma::Mat<int>& data, int n_cores)
 {
   // Convert from assumed external 1-indexing to C++ indexing (Not needed for python)
   // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
@@ -91,7 +91,7 @@ arma::mat mim_ML_cpp(const arma::mat& data, int n_cores)
 
 // Mutual information using maximum likelihood entropy estimate and
 // Miller-Madow bias correction
-arma::mat mim_MM_cpp(const arma::mat& data, int n_cores)
+arma::mat mim_MM_cpp(const arma::Mat<int>& data, int n_cores)
 {
   // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
@@ -154,7 +154,7 @@ arma::mat mim_MM_cpp(const arma::mat& data, int n_cores)
 
 
 // Chao-Shen Estimator
-arma::mat mim_CS_cpp(const arma::mat& data, int n_cores)
+arma::mat mim_CS_cpp(const arma::Mat<int>& data, int n_cores)
 {
   // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);
   const int n_genes(data.n_cols), n_samples(data.n_rows);
@@ -223,7 +223,7 @@ arma::mat mim_CS_cpp(const arma::mat& data, int n_cores)
 
 
 // Shrinkage estimator
-arma::mat mim_shrink_cpp(const arma::mat& data, int n_cores)
+arma::mat mim_shrink_cpp(const arma::Mat<int>& data, int n_cores)
 {
   // arma::Mat<int> data = arma::conv_to<arma::Mat<int> >::from(disc_expr_data - 1.0);   // Change from assumed R indexing to C++ indexing
   const int n_genes(data.n_cols), n_samples(data.n_rows);

@@ -1,79 +1,123 @@
 cmake_minimum_required(VERSION 3.10...3.18)
 project(fastGeneMI LANGUAGES CXX)
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Armadillo
-find_package(Armadillo REQUIRED)
-include_directories(${ARMADILLO_INCLUDE_DIRS})
+option(ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 
-# Find Threads
+# -------------------------
+# Dependencies
+# -------------------------
+
 find_package(Threads REQUIRED)
 
-# Find OpenMP
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    message(STATUS "Found OpenMP")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+find_package(Armadillo REQUIRED)
+message(STATUS "Armadillo include dirs: ${ARMADILLO_INCLUDE_DIRS}")
+message(STATUS "Armadillo libraries: ${ARMADILLO_LIBRARIES}")
+
+# If building inside conda, force CMake to use that interpreter unless user overrides
+if(NOT DEFINED Python_EXECUTABLE AND DEFINED ENV{CONDA_PREFIX})
+    set(Python_EXECUTABLE "$ENV{CONDA_PREFIX}/bin/python" CACHE FILEPATH "" FORCE)
 endif()
 
-# Find Python (for building the Python module)
-find_package(Python 3.9 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+# Force pybind11 (added via add_subdirectory) to use CMake's FindPython results
+set(PYBIND11_FINDPYTHON ON)
 
-# Find pybind11. If not found via package, add from our extern/pybind11 subdirectory.
+find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+
 if(NOT TARGET pybind11::module)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/pybind11)
+endif()
+
+if(NOT TARGET carma::carma)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/carma)
 endif()
 
-# Create a library for the core functionality
-add_library(fastGeneMI_lib STATIC fastGeneMI/mi_estimators_main.cpp)
 
-# Specify include directories for the library
-target_include_directories(fastGeneMI_lib PUBLIC fastGeneMI)
+# OpenMP (optional)
+if(ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        message(STATUS "Found OpenMP")
+    endif()
+endif()
 
 # -------------------------
-# Standalone Executable Target
+# Core library
 # -------------------------
-# Create the executable from mi_estimators.hpp (which contains main())
+add_library(fastGeneMI_lib STATIC
+    fastGeneMI/mi_estimators_main.cpp
+)
+
+target_include_directories(fastGeneMI_lib PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/fastGeneMI>
+    $<INSTALL_INTERFACE:include/fastGeneMI>
+    ${ARMADILLO_INCLUDE_DIRS}
+)
+
+target_link_libraries(fastGeneMI_lib PUBLIC
+    ${ARMADILLO_LIBRARIES}
+    Threads::Threads
+)
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(fastGeneMI_lib PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
+# -------------------------
+# Standalone executable
+# -------------------------
 add_executable(fgMI fastGeneMI/mi_estimators_main.cpp)
+target_link_libraries(fgMI PRIVATE fastGeneMI_lib)
 
-# Link Armadillo and OpenMP (if available)
-target_link_libraries(fgMI PRIVATE ${ARMADILLO_LIBRARIES})
 if(OpenMP_CXX_FOUND)
     target_link_libraries(fgMI PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 # -------------------------
-# Python Module Target
+# Python extension module
 # -------------------------
-# Create the Python module using pybind11 from fastGeneMI/bindings.cpp
 pybind11_add_module(fastGeneMI fastGeneMI/bindings.cpp)
 
-target_link_libraries(fastGeneMI PRIVATE fastGeneMI_lib)
+target_include_directories(fastGeneMI PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/fastGeneMI
+    ${ARMADILLO_INCLUDE_DIRS}
+    ${Python_NumPy_INCLUDE_DIRS}
+)
 
-# Ensure the module can find our headers
-target_include_directories(fastGeneMI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(fastGeneMI PRIVATE
+    fastGeneMI_lib
+    carma::carma
+    ${ARMADILLO_LIBRARIES}
+)
 
-# Link against Armadillo and OpenMP as needed
-target_link_libraries(fastGeneMI PRIVATE ${ARMADILLO_LIBRARIES})
-target_link_libraries(fastGeneMI PRIVATE carma::carma)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(fastGeneMI PRIVATE OpenMP::OpenMP_CXX)
-    target_link_libraries(fastGeneMI_lib PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
-install(TARGETS fastGeneMI
-        LIBRARY DESTINATION fastGeneMI)
+# -------------------------
+# Optimization flags
+# -------------------------
+if(DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
+    message(STATUS "Building on GitHub Actions: Using generic flags")
+    target_compile_options(fastGeneMI_lib PRIVATE -O3 -ffast-math)
+else()
+    message(STATUS "Building locally: Using -march=native")
+    target_compile_options(fastGeneMI_lib PRIVATE -O3 -march=native -ffast-math)
+endif()
 
-# Install the executable
+# -------------------------
+# Install
+# -------------------------
+install(TARGETS fastGeneMI
+    LIBRARY DESTINATION fastGeneMI
+)
+
 install(TARGETS fgMI
     RUNTIME DESTINATION bin
 )
 
-# Install the Python module
-install(TARGETS fastGeneMI
-    LIBRARY DESTINATION lib/python_modules
+install(TARGETS fastGeneMI_lib
+    ARCHIVE DESTINATION lib
 )
