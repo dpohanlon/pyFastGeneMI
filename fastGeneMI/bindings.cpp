@@ -20,7 +20,7 @@ py::array_t<double> mim_CS_py(const arma::Mat<int>& disc_expr_data, int n_cores)
     return carma::mat_to_arr(miMatrix);
 }
 
-PYBIND11_MODULE(fastGeneMI, m) {
+PYBIND11_MODULE(_fastGeneMI, m) {
 
     py::module_::import("numpy");
 

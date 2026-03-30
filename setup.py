@@ -1,7 +1,8 @@
 # setup.py
 import os
-from skbuild import setup
+
 from setuptools import find_packages
+from skbuild import setup
 
 setup(
     name="fastGeneMI",
@@ -10,14 +11,16 @@ setup(
     author="Daniel O'Hanlon, Jonathan Ish-Horowicz",
     author_email="dpohanlon@gmail.com",
     license="MIT",
-    packages=['fastGeneMI'],
+    packages=["fastGeneMI"],
     setup_requires=[
         "numpy>=1.18.0",
         "pybind11>=2.6",
+        "scikit-build>=0.17",
     ],
     install_requires=[
         "numpy>=1.18.0",
         "pybind11>=2.6",
+        "scikit-build>=0.17",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -28,6 +31,6 @@ setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS",
     ],
-    python_requires='>=3.9,<4.0',
+    python_requires=">=3.9,<4.0",
     # cmake_args=["-DCMAKE_CXX_STANDARD=11"],
 )
