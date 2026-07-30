@@ -43,6 +43,12 @@ sudo apt-get install libarmadillo-dev
 
 ```
 
+If Armadillo is installed via Conda
+
+```bash
+export CMAKE_ARGS="-DARMADILLO_INCLUDE_DIR=$CONDA_PREFIX/include -DARMADILLO_LIBRARY=$CONDA_PREFIX/lib/libarmadillo.so"
+```
+
 To checkout the repository, as well as the PyBind11 and CARMA submodule:
 
 ``` bash
